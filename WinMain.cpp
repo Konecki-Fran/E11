@@ -1,5 +1,6 @@
 
 #include "Window.h"
+#include "D3DX11.h"
 
 int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPWSTR lpCmdLine, int nCmdShow) {
