@@ -81,7 +81,7 @@ void Window::initWindowClass(HINSTANCE hInstance)
 	RegisterClassExW(&wc);
 }
 
-std::string Window::TranslateErrorCode(HRESULT hr) noexcept
+std::string Window::TranslateErrorCode(HRESULT hr) 
 {
 	char* pMsgBuf = nullptr;
 	// windows will allocate memory for err string and make our pointer point to it

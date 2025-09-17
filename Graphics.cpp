@@ -1,6 +1,9 @@
 #include "Graphics.h"
+#include "winerror.h"
 
-Graphics::Graphics()
+namespace wrl = Microsoft::WRL;
+
+Graphics::Graphics(HWND hWnd)
 {
 
 	D3D_FEATURE_LEVEL pFeatureLevels[] = {
@@ -29,7 +32,7 @@ Graphics::Graphics()
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Flags = 0;
 
-	D3D_FEATURE_LEVEL* pFeatureLevelResult;
+	D3D_FEATURE_LEVEL* pFeatureLevelResult = nullptr;
 
 	HRESULT result = D3D11CreateDeviceAndSwapChain(
 		nullptr,
@@ -46,9 +49,25 @@ Graphics::Graphics()
 		&pDeviceContext
 	);
 
-	pDeviceContext;
-	pRTV;
+	wrl::ComPtr<ID3D11Resource> pBB;
+	pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBB);
+	pDevice->CreateRenderTargetView(pBB.Get(), nullptr, &pRTV);
+
 };
+
+void Graphics::ClearRTV(Color c) {
+	const float color[] = {c.r, c.g, c.b, 1.f};
+	pDeviceContext->ClearRenderTargetView(pRTV.Get(), color);
+}
+
+void Graphics::EndFrame(HWND hWnd) {
+	HRESULT hr;
+	if (FAILED(hr = pSwapChain->Present(1u, 0u)))
+	{
+		MessageBox(hWnd, L"Presenting failed", L"Exception Caught", 0);
+	}
+	
+}
 
 Graphics::~Graphics() {
 };

@@ -1,8 +1,8 @@
 #pragma once
 
 class Keyboard {
-	void OnKeyDown();
-	void OnKeyUp();
+	void OnKeyDown(unsigned int keyCode);
+	void OnKeyUp(unsigned int keyCode);
 
 
 private:
