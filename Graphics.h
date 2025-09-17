@@ -3,12 +3,15 @@
 #include "WindowsFiltered.h"
 #include "d3d11.h"
 #include "DirectXColors.h"
+#include "E11Exception.h"
 
 struct Color {
 	float r, g, b;
 };
 
 class Graphics {
+	class Exception : public E11Exception {};
+
 public:
 	Graphics();
 	~Graphics();
