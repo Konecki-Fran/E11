@@ -1,6 +1,7 @@
 #include <sstream>
 #include "Window.h"
 #include "resource.h"
+#include <iostream>
 
 LRESULT WINAPI WindowProc(
 	_In_ HWND hWnd,
@@ -10,13 +11,26 @@ LRESULT WINAPI WindowProc(
 {
 	switch (msg)
 	{
+
 	case WM_CLOSE:
 		PostQuitMessage(69);
 		break;
+	case WM_KEYDOWN:
+		if (wParam == VK_ESCAPE) {
+			PostQuitMessage(69);
+		}
+		break;
 	case WM_CHAR: {
-		static std::wstring title;
-		title.push_back((char)wParam);
-		SetWindowTextW(hWnd, title.c_str());
+		static int i = 0;
+		if (lParam & 0x4000FFFF) { // Key held down
+			SetWindowTextW(hWnd, (std::to_wstring(lParam)).c_str());
+		}
+		else {
+			i = 0;
+			static std::wstring title;
+			title.push_back((char)wParam);
+			SetWindowTextW(hWnd, title.c_str());
+		}
 		break;
 	}
 	case WM_LBUTTONDOWN:
@@ -27,11 +41,7 @@ LRESULT WINAPI WindowProc(
 		SetWindowTextW(hWnd, oss.str().c_str());
 		break;
 	}
-	case WM_KEYDOWN:
-		if (wParam == VK_ESCAPE) {
-			PostQuitMessage(69);
-		}
-		break;
+
 	default:
 		break;
 	}
@@ -40,7 +50,8 @@ LRESULT WINAPI WindowProc(
 }
 
 Window::Window(UINT x, UINT y, std::string name, HINSTANCE hInstance) {
-	LPCWSTR classNameL = L"E11 Window Class";
+	hInstance = hInstance;
+	initWindowClass();
 
 	RECT wr;
 	wr.left = 100;
@@ -50,7 +61,7 @@ Window::Window(UINT x, UINT y, std::string name, HINSTANCE hInstance) {
 	AdjustWindowRect(&wr, WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, FALSE);
 	// create window & get hWnd
 	hWnd = CreateWindowExW(
-		0, classNameL, L"WindowName", WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
+		0, className, L"WindowName", WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU,
 		200, 200,
 		wr.right - wr.left, wr.bottom - wr.top,
 		nullptr, nullptr, GetModuleHandle(NULL), this
@@ -60,10 +71,9 @@ Window::Window(UINT x, UINT y, std::string name, HINSTANCE hInstance) {
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
-void Window::initWindowClass(HINSTANCE hInstance)
+void Window::initWindowClass()
 {
 	WNDCLASSEXW wc = { 0 };
-	LPCWSTR classNameL = L"E11 Window Class";
 
 	wc.cbSize = sizeof(wc);
 	wc.style = CS_OWNDC;
@@ -75,13 +85,17 @@ void Window::initWindowClass(HINSTANCE hInstance)
 	wc.hCursor = nullptr;
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
 	wc.lpszMenuName = nullptr;
-	wc.lpszClassName = classNameL;
+	wc.lpszClassName = className;
 	wc.hIconSm = nullptr;
 
 	RegisterClassExW(&wc);
 }
 
-std::string Window::TranslateErrorCode(HRESULT hr) 
+Window::~Window() {
+	UnregisterClass(className, hInstance);
+}
+
+std::string Window::TranslateErrorCode(HRESULT hr)
 {
 	char* pMsgBuf = nullptr;
 	// windows will allocate memory for err string and make our pointer point to it
