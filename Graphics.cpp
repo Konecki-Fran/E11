@@ -1,11 +1,11 @@
 #include "Graphics.h"
 #include "winerror.h"
+#include "Window.h"
 
 namespace wrl = Microsoft::WRL;
 
-Graphics::Graphics(HWND hWnd)
+Graphics::Graphics()
 {
-
 	D3D_FEATURE_LEVEL pFeatureLevels[] = {
 		D3D_FEATURE_LEVEL_9_1,
 		D3D_FEATURE_LEVEL_9_2,
@@ -27,7 +27,7 @@ Graphics::Graphics(HWND hWnd)
 	swapChainDesc.SampleDesc.Quality = 0;
 	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
 	swapChainDesc.BufferCount = 1;
-	swapChainDesc.OutputWindow = hWnd;
+	swapChainDesc.OutputWindow = Window::GetHWnd();
 	swapChainDesc.Windowed = TRUE;
 	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	swapChainDesc.Flags = 0;
@@ -52,11 +52,10 @@ Graphics::Graphics(HWND hWnd)
 	wrl::ComPtr<ID3D11Resource> pBB;
 	pSwapChain->GetBuffer(0, __uuidof(ID3D11Resource), &pBB);
 	pDevice->CreateRenderTargetView(pBB.Get(), nullptr, &pRTV);
-
 };
 
 void Graphics::ClearRTV(Color c) {
-	const float color[] = {c.r, c.g, c.b, 1.f};
+	const float color[] = { c.r, c.g, c.b, 1.f };
 	pDeviceContext->ClearRenderTargetView(pRTV.Get(), color);
 }
 
@@ -66,7 +65,6 @@ void Graphics::EndFrame(HWND hWnd) {
 	{
 		MessageBox(hWnd, L"Presenting failed", L"Exception Caught", 0);
 	}
-	
 }
 
 Graphics::~Graphics() {

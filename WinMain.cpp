@@ -6,17 +6,18 @@ int APIENTRY wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	LPWSTR lpCmdLine, int nCmdShow) {
 
 	try {
-		App::Start();
+		IApp::Start();
 	}
 	catch (E11Exception e) {
-		App::Alert("E11Exception", e.what());
+		IApp::Alert("E11Exception", e.what());
 	}
 	catch (std::exception e) {
-		App::Alert("Std exception", e.what());
+		IApp::Alert("Std exception", e.what());
 	}
 	catch (...) {
-		App::Alert("Unknown exception", "No details available");
+		IApp::Alert("Unknown exception", "No details available");
 	}
 
+	IApp::CleanUp();
 	return 0;
 }

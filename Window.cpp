@@ -2,6 +2,88 @@
 #include "Window.h"
 #include "resource.h"
 #include <iostream>
+#include "Print.h"
+#include "App.h"
+
+#define KEYBOARD_ACTION WM_KEYDOWN: case WM_KEYUP
+#define MOUSE_ACTION WM_LBUTTONDOWN: case WM_LBUTTONUP: case WM_RBUTTONDOWN: case WM_RBUTTONUP: case WM_MBUTTONDOWN: case WM_MBUTTONUP: case WM_MOUSEMOVE: case WM_MOUSEWHEEL
+
+void HandleKeyboardMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
+	switch (msg)
+	{
+
+		//	case WM_CHAR: {}
+	case WM_KEYDOWN:
+	{
+		if (wParam == VK_ESCAPE) {
+			PostQuitMessage(69);
+			IApp::Stop();
+		}
+		else {
+			bool isHeldDown = lParam & 0x4000FFFF;
+			Window::keyboard->OnKeyDown(wParam);
+		}
+		break;
+	}
+
+	case WM_KEYUP:
+	{
+		Window::keyboard->OnKeyUp(wParam);
+		break;
+	}
+	default:
+		break;
+	}
+}
+
+void HandleMouseMessage(UINT msg, WPARAM wParam, LPARAM lParam) {
+	switch (msg) {
+	case WM_MOUSEMOVE:
+	{
+		auto points = MAKEPOINTS(lParam);
+		Window::mouse->OnMove(points.x, points.y);
+		break;
+	}
+	case WM_LBUTTONDOWN:
+	{
+		Window::mouse->OnLClick();
+		break;
+	}
+	case WM_LBUTTONUP:
+	{
+		Window::mouse->OnLRelease();
+		break;
+	}
+	case WM_RBUTTONDOWN:
+	{
+		Window::mouse->OnRClick();
+		break;
+	}
+	case WM_RBUTTONUP:
+	{
+		Window::mouse->OnRRelease();
+		break;
+	}
+	case WM_MBUTTONDOWN:
+	{
+		Window::mouse->OnMClick();
+		break;
+	}
+	case WM_MBUTTONUP:
+	{
+		Window::mouse->OnMRelease();
+		break;
+	}
+	case WM_MOUSEWHEEL:
+	{
+		auto zDelta = GET_WHEEL_DELTA_WPARAM(wParam);
+		Window::mouse->OnWheel(zDelta);
+		break;
+	}
+	default:
+		break;
+	}
+}
 
 LRESULT WINAPI WindowProc(
 	_In_ HWND hWnd,
@@ -11,37 +93,22 @@ LRESULT WINAPI WindowProc(
 {
 	switch (msg)
 	{
-
 	case WM_CLOSE:
-		PostQuitMessage(69);
-		break;
-	case WM_KEYDOWN:
-		if (wParam == VK_ESCAPE) {
-			PostQuitMessage(69);
-		}
-		break;
-	case WM_CHAR: {
-		static int i = 0;
-		if (lParam & 0x4000FFFF) { // Key held down
-			SetWindowTextW(hWnd, (std::to_wstring(lParam)).c_str());
-		}
-		else {
-			i = 0;
-			static std::wstring title;
-			title.push_back((char)wParam);
-			SetWindowTextW(hWnd, title.c_str());
-		}
-		break;
-	}
-	case WM_LBUTTONDOWN:
 	{
-		auto pos = MAKEPOINTS(lParam);
-		std::wstringstream oss{};
-		oss << "(" << pos.x << ", " << pos.y << ")";
-		SetWindowTextW(hWnd, oss.str().c_str());
+		PostQuitMessage(69);
+		IApp::Stop();
 		break;
 	}
-
+	case KEYBOARD_ACTION:
+	{
+		HandleKeyboardMessage(msg, wParam, lParam);
+		break;
+	}
+	case MOUSE_ACTION:
+	{
+		HandleMouseMessage(msg, wParam, lParam);
+		break;
+	}
 	default:
 		break;
 	}
@@ -49,8 +116,7 @@ LRESULT WINAPI WindowProc(
 	return DefWindowProcW(hWnd, msg, wParam, lParam);
 }
 
-Window::Window(UINT x, UINT y, std::string name, HINSTANCE hInstance) {
-	hInstance = hInstance;
+Window::Window(UINT x, UINT y, std::string name) {
 	initWindowClass();
 
 	RECT wr;
@@ -67,7 +133,7 @@ Window::Window(UINT x, UINT y, std::string name, HINSTANCE hInstance) {
 		nullptr, nullptr, GetModuleHandle(NULL), this
 	);
 
-	// show window
+	Window::phWnd = &hWnd;
 	ShowWindow(hWnd, SW_SHOWDEFAULT);
 }
 
@@ -80,7 +146,7 @@ void Window::initWindowClass()
 	wc.lpfnWndProc = WindowProc;
 	wc.cbClsExtra = 0;
 	wc.cbWndExtra = 0;
-	wc.hInstance = hInstance;
+	wc.hInstance = GetModuleHandle(nullptr);
 	wc.hIcon = LoadIcon(hInstance, MAKEINTRESOURCE(IDI_ICON1));
 	wc.hCursor = nullptr;
 	wc.hbrBackground = (HBRUSH)GetStockObject(BLACK_BRUSH);
